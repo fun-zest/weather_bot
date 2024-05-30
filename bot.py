@@ -16,7 +16,7 @@ with open('f2.json', 'r', encoding='utf-8') as file:
 @bot.message_handler(commands=['start'])
 def start(message):
     hello = 'Добрый день, я ваш персональный метеоролог.'
-    bot.send_message(message.chat.id, text=hello)
+    bot.send_message(message.chat.id, text=hello, reply_markup=keyboard_lobby())
     str_id = str(message.chat.id)
     if str(str_id) not in users:
         change_city(message)
@@ -39,16 +39,33 @@ def save_city(message):
         else:
             cities[str(message.chat.id)] = [message.text]
         json.dump(cities, file, ensure_ascii=False)
-    bot.send_message(message.chat.id, text=f'Город {message.text} успешно сохранен!', reply_markup=lobby())
+    bot.send_message(message.chat.id, text=f'Город {message.text} успешно сохранен!', reply_markup=keyboard_lobby())
     
 
-def lobby():
-    keyboard = telebot.types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True, one_time_keyboard=False)
+def keyboard_lobby():
+    keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=False)
     button1 = telebot.types.KeyboardButton('Текущая погода')
     button2 = telebot.types.KeyboardButton('Подробный прогноз на дату')
     button3 = telebot.types.KeyboardButton('Сменить город')
-    keyboard.add(button1, button2, button3)
+    button4 = telebot.types.KeyboardButton('Мои города')
+    keyboard.add(button1, button2)
+    keyboard.add(button3, button4)
     return keyboard
+
+def cities_history(message):
+    history_of_cities = cities[str(message.chat.id)]
+    my_cities = telebot.types.InlineKeyboardMarkup()
+    for city in history_of_cities:
+        button = telebot.types.InlineKeyboardButton(text=city, callback_data='Город:' + city)
+        my_cities.add(button)
+    bot.send_message(message.chat.id, text='Выберите нужный город: ', reply_markup=my_cities)
+
+@bot.callback_query_handler(func=lambda call: 'Город:' in call.data)
+def show_cities(call):
+    city_name = call.data.split(':')[1]
+    bot.send_message(call.message.chat.id, text='\n'.join(get_weather(city_name)))
+    print(city_name)
+
 
 def current_message(message):
     try:
@@ -91,8 +108,10 @@ def check_message(message):
         change_city(message)
     elif message.text == 'Подробный прогноз на дату':
         days_buttons(message)
+    elif message.text == 'Мои города':
+        cities_history(message)
     else:
-        bot.send_message(message.chat.id, text='Я вас не понимать')
+        bot.send_message(message.chat.id, text='Я вас не понимаю')
 
 bot.polling()
 

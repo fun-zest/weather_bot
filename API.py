@@ -70,4 +70,4 @@ def get_daily_forecasts(city_name):
             f"Влажность {main['humidity']}%")
     return forecasts
 
-#print(get_daily_forecasts('Волгоград'))
+print(get_weather('Ковров'))
