@@ -9,6 +9,8 @@ FORECASTS = {}
 
 with open('f.json', 'r', encoding='utf-8') as file:
     users = json.load(file)
+with open('f2.json', 'r', encoding='utf-8') as file:
+    cities = json.load(file)
 
 
 @bot.message_handler(commands=['start'])
@@ -30,7 +32,13 @@ def save_city(message):
     users[str(message.chat.id)] = message.text
     with open('f.json', 'w', encoding='utf-8') as file:
         json.dump(users, file, ensure_ascii=False)
-        print(users)
+    with open('f2.json', 'w', encoding='utf-8') as file:
+        if str(message.chat.id) in cities:
+            if message.text not in cities[str(message.chat.id)]:
+                cities[str(message.chat.id)].append(message.text)
+        else:
+            cities[str(message.chat.id)] = [message.text]
+        json.dump(cities, file, ensure_ascii=False)
     bot.send_message(message.chat.id, text=f'Город {message.text} успешно сохранен!', reply_markup=lobby())
     
 
